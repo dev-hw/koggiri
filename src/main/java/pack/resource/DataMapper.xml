@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="dev">
+
+	<!-- 스터디 전체 리스트 가져오기 : 로그인 O-->
+	<select id="selectStudyListLogin" resultType="StudyDto" parameterType="integer">
+		select S.studyNo, S.studyName,S.content,S.maxpeoplenum,S.nowPeoplenum,S.language,U.name
+		from (select * from studyinfo where studyNo not in(select studyNo from studyMemberINfo where userNo=1)) S inner join UserInfo U on S.manager_userNo = U.userno where userNo!=#{userNo}
+	</select>
+	
+	<!-- 스터디 전체 리스트 가져오기  로그인 X-->
+	<select id="selectStudyList" resultType="StudyDto" parameterType="integer">
+		select S.studyNo, S.studyName,S.content,S.maxpeoplenum,S.nowPeoplenum,S.language,U.name
+		from StudyInfo S inner join UserInfo U on S.manager_userNo = U.userno
+	</select>
+
+	<!-- 스터디 언어 검색 리스트 가져오기 -->
+	<select id="selectSearchLanguageStudyList" parameterType="StudySearchBean" resultType="StudyDto">
+		select studyNo,content, studyName ,maxPeopleNum ,nowPeopleNum ,language , manager_userNo from StudyInfo where language like '%/'|| #{searchValue} || '/%'  
+	</select>
+	
+	<!-- 스터디 제목 검색 리스트 가져오기 -->
+	<select id="selectSearchTitleStudyList" parameterType="StudySearchBean" resultType="StudyDto">
+		select studyNo,content, studyName ,maxPeopleNum ,nowPeopleNum ,language , manager_userNo from StudyInfo where studyName like '%'|| #{searchValue} || '%'  
+	</select>
+
+	<!-- 언어 이미지 버튼 클릭시 스터디 리스트 가져오기 -->
+	<select id="selectImgBtnStudyList" parameterType="java.util.List" resultType="StudyDto">
+		select studyNo,content, studyName ,maxPeopleNum ,nowPeopleNum ,language , manager_userNo from StudyInfo where
+		<foreach collection='list' index='index' item='item' separator='and'>
+			language like '%/'|| #{item} || '/%'
+		</foreach>
+	</select>
+	
+	<!-- 스터디 상세보기 (하나의 스터디 정보 들고오기) -->
+	<select id="selectStudy" parameterType="integer" resultType="StudyDetailBean">
+		select S.addTime, S.studyNo, S.studyName,S.content,S.maxpeoplenum,S.nowPeoplenum,S.language,U.name from StudyInfo S inner join UserInfo U on S.manager_userNo = U.userno where S.studyNo = #{studyNo}
+	</select>
+	
+
+	<!-- 알림 리스트 -->
+	<select id="alarmList" parameterType="integer" resultType="AlarmBean">
+		select  click,formNo, state, studyName, formContent,name from UserInfo U join 
+			(select click,formNo, state, studyName, formContent,applicant from studyInfo S join 
+				(select FORMNO,CONTENT as formContent,STATE,STUDYNO,CLICK,applicant from FormInfo F join 
+					AlarmInfo A using(formNo) where userNo = #{userNo} order by alarmno desc) B on S.studyNo = B.studyNo) C on C.applicant = U.userNo
+	</select>
+	
+	<!-- 페이지네이션을 위한 게시물 갯수 가져오기 -->
+	<select id="totalCnt" resultType="integer">
+		select count(*) from PostInfo
+	</select>
+	<!-- 게시판리스트에 보여줄 정보 가져오기 -->
+	<select id="selectBoardList" parameterType="string"
+		resultType="BoardDto">
+		
+		select postno, views, posttime, title, name, U.userNo  from userInfo U 
+		inner join(select P.PostNo, P.title, P.content,P.PostTime,P.views, M.studyno as studyno, userNo
+		from Postinfo P inner join studymemberinfo m on P.studymemberno =
+		M.studymemberno where studyNo = #{studyNo}) B on B.userNo = U.userNo where studyNo = #{studyNo} order by postno desc
+	</select>
+	<!-- 게시판의 총 게시물 갯수 -->
+	<select id="totalBoardRecord" parameterType="string"
+		resultType="integer">
+		select count(*) from userInfo U join (
+		select * from StudyInfo S inner join
+		(select P.PostNo, P.title, P.content,P.PostTime,P.views, M.studyno as studyno
+		from Postinfo P inner join studymemberinfo m on P.studymemberno =
+		M.studymemberno)
+		using(studyno)
+		) B on U.userNo = B.manager_userNo where studyNo = #{studyNo}
+	</select>
+
+	<!-- 해당 스터디의 매니저 번호 가져오기 -->
+	<select id="selectManager" parameterType="string"
+		resultType="string">
+		select manager_userNo from studyinfo where studyNo = #{studyNo}
+	</select>
+	<!-- 포스팅 시 게시물 작성자 닉네임 가져오기 -->
+	<select id="selectName" parameterType="integer"	resultType="string">
+		select name from userInfo where userNo=#{userNo}
+	</select>
+
+
+	<!--스터디에서 멤버 삭제하기 -->
+	<delete id="deleteMemberFromStudy" parameterType="StudyBoardbean">
+		delete from studymemberInfo where userNo=#{userNo} and studyNo=#{studyNo}
+	</delete>
+
+	<delete id = "removeStudy" parameterType="integer">
+		delete from studyinfo where studyNo = #{studyNo}
+	</delete>
+	
+	<!-- studyno로 스터디장 번호 찾기 -->
+	<select id="selectManagerno" parameterType="integer" resultType="integer">
+		select manager_userno from studyInfo where studyNo=#{studyNo}
+	</select>
+	
+	<!-- studyno로 nowpeoplenum 찾기 -->
+	<select id="selectNowPeople" parameterType="integer" resultType="integer">
+		select nowpeoplenum from studyInfo where studyNo=#{studyNo}
+	</select>
+	
+	<!-- studyno로 nowpeoplenum찾아서 +1하기 -->
+	<update id="updateNowPeople" parameterType="integer">
+		update studyinfo set NowPeopleNum=NowPeopleNum + 1 where studyNo=#{studyNo}
+	</update>
+	
+	<!-- 스터디 정보 변경하기 -->
+	<update id="updateStudyinfo" parameterType="StudyDto">
+		update studyinfo set content=#{content }, maxPeopleNum=#{maxPeopleNum}, language=#{language} where studyNo=#{studyNo}
+	</update>
+	
+	<!-- 회원가입 -->
+	<insert id="insertUser" parameterType="UserBean">
+		insert into userInfo values(#{userNo },#{id }, #{password }, #{name }, #{answer }, #{hint })
+	</insert>
+	
+	<!-- 아이디로 닉네임 찾기 -->
+	<select id="selectName3" parameterType="UserBean" resultType="string">
+		select name from userInfo where id=#{id}
+	</select>
+	
+	<!-- 아이디로 유저 정보 찾기 -->
+	<select id="selectidUser" parameterType="string" resultType="UserBean">
+		select * from userInfo where id=#{id}
+	</select>
+	
+	<!-- 아이디로 힌트 찾기 -->
+	<select id="selectidhint" parameterType="string" resultType="string">
+		select hint from userInfo where id=#{id}
+	</select>
+	
+	<!-- 아이디로 힌트답 찾기 -->
+	<select id="selectidanswer" parameterType="string" resultType="string">
+		select answer from userInfo where id=#{id}
+	</select>
+	
+	<!-- userNo로 유저 정보 찾기 -->
+	<select id="selectunoUser" parameterType="integer" resultType="UserBean">
+		select * from userInfo where userNo=#{userNo}
+	</select>
+	
+	<!-- 닉네임으로 유저 정보 찾기 -->
+	<select id="selectNameUser" parameterType="string" resultType="UserBean">
+		select * from userInfo where name=#{name}
+	</select>
+	
+	<!-- 닉네임으로 userNo 찾기 -->
+	<select id="selectNameUserno" parameterType="string" resultType="integer">
+		select userNo from userInfo where name=#{name}
+	</select>
+	
+	<!-- userNo으로 닉네임 찾기 -->
+	<select id="selectUsernoName" parameterType="integer" resultType="string">
+		select name from userInfo where userNo=#{userNo}
+	</select>
+	
+	<!-- userno로 비밀번호 찾기 -->
+	<select id="selectNoPwd" parameterType="integer" resultType="string">
+		select password from userInfo where userNo=#{userNo}
+	</select>
+	
+	<!-- 회원탈퇴 -->
+	<delete id="deleteUser" parameterType="integer">
+		delete from userInfo where userNo=#{userNo}
+	</delete>
+	
+	<!-- 회원정보 수정 -->
+	<update id="updateUinfo" parameterType="UserBean">
+		update userInfo set name=#{name}, password=#{password } where id=#{id }
+	</update>
+	
+	<select id="selectUserMaxnum" resultType="integer">
+		select max(userNo) from userInfo
+	</select>
+
+	<!-- 로그인할때 일치하는 아이디와 비밀번호가 있는지 확인 -->
+	<select id="selectLogin" parameterType="UserBean" resultType="integer">
+		select count(*) from userInfo where id=#{id } and password=#{password}
+	</select>
+
+	<!-- 아이디 중복확인, 숫자가 0이면 사용가능, 1이상이면 사용불가능 -->
+	<select id="selectId" parameterType="UserBean" resultType="integer">
+		select count(*) from userInfo where id=#{id }
+	</select>
+
+	<!-- 닉네임 중복확인, 숫자가 0이면 사용가능, 1이상이면 사용불가능 -->
+	<select id="selectName2" parameterType="UserBean" resultType="integer">
+		select count(*) from userInfo where name=#{name }
+	</select>
+	<!-- 포스팅 게시물 상세보기 -->
+	<select id = "PostDetail" parameterType="string" resultType = "PostDto">
+	select P.postno, P.title, P.views, P.content, P.postTime, U.name from PostInfo P, UserInfo U where U.userNo
+	 = (select userNo from studyMemberInfo where studyMemberno = (select studymemberNo from postInfo where postNo = 31));
+	 </select>
+	 
+	<!-- 포스팅 조회수를 위한 PostNo 읽기 -->
+	 <select id="postOne" parameterType="PostDto" resultType="PostDto">
+	 select * from PostInfo where postNo=#{postNo} and studyMemberNo=#{studyMemberNo}
+	 </select>
+	 
+	 <!-- 포스팅상세보기 조회수 -->
+	 <update id="updatePostcnt" parameterType="integer">
+	 	update PostInfo set views=views + 1 where postNo=#{postNo} and studyMemberNo=#{studyMemberNo}
+	 </update>
+
+	<!-- 스터디번호와 postNo로 글제목 찾기 -->
+	<select id="selectNosTitle" parameterType="PostDto" resultType="string">
+		select title from PostInfo where postNo=#{postNo} and sNo=#{sNo}
+	</select>
+	
+	<!-- 게시글의 작성자 찾기 -->
+	<select id="selectNosUno" parameterType="PostDto" resultType="integer" >
+		select uNo from PostInfo where postNo=#{postNo} and sNo=#{sNo}
+	</select>
+	
+   
+    <select id="currentMaxnum" parameterType="integer" resultType="integer">
+       select max(postno) from postinfo p join studymemberinfo s on s.studymemberno = p.studymemberno where s.studyno = ${studyNo}
+    </select>
+    
+    <insert id ="insertIntoBoard" parameterType="StudyBoardbean">
+    insert into postInfo values(#{postNo},#{title},#{content},sysdate,0,#{studyMemberNo},#{uNo}, #{sNo})
+    </insert>
+    
+    <select id="selectStudymemberno" parameterType="StudyMemberDto" resultType="integer">
+    select studymemberno from studymemberinfo where studyno=#{studyNo} and userno=#{userNo}
+    </select>
+    
+    <!-- 댓글 추가하기 -->
+    <insert id="insertCom" parameterType="CommentDto">
+       insert into comments values(#{commentNo},#{content},#{time},#{userName},#{postNo},0, #{studyNo})
+    </insert>
+    
+    <!-- 댓글 삭제하기 -->
+    <delete id="deleteCom" parameterType="CommentDto">
+       delete from comments where commentNo=#{commentNo} and postNo=#{postNo} and studyNo=#{studyNo}
+    </delete>
+    
+    <!-- 게시글 삭제시 게시글에 있던 댓글 지우기 -->
+    <delete id="deletepostCom" parameterType="CommentDto">
+    	delete from comments where studyNo=#{studyNo} and postNo=#{postNo}
+    </delete>
+    
+    <!-- 회원 탈퇴시 댓글 지우기 -->
+    <delete id="deleteMemCom" parameterType="CommentDto">
+    	delete from comments where userName=#{userName } and studyNo=#{studyNo}
+    </delete>
+    
+    
+    <!-- 댓글 보기 -->
+    <select id="selectCom" parameterType="CommentDto" resultType="CommentDto">
+       select * from comments where postNo=#{postNo} and studyNo=#{studyNo} order by commentNo desc
+    </select>
+    
+    <!-- 유저별 댓글 보기 -->
+    <select id="selectUsercom" parameterType="string" resultType="CommentDto">
+    	select * from comments where userName=#{userName }
+    </select>
+    
+    <!-- 게시글 댓글 max num 구하기 -->
+    <select id="selectMaxCom" parameterType="CommentDto" resultType="integer">
+       select max(commentNo) from comments where postNo=#{postNo} and studyNo=#{studyNo}
+    </select>
+    
+    <!-- 댓글 페이징 처리를 위해 몇개의 댓글이 있는지 구하기 -->
+    <select id="selectComcount" parameterType="CommentDto" resultType="integer">
+       select count(*) from comments where postNo=#{postNo} and studyNo=#{studyNo}
+    </select>
+    
+    <!-- 닉네임 변경시 댓글 닉네임 바꾸기   -->
+    <update id="updateNamecom" parameterType="CommentDto">
+    	update comments set userName=#{content} where userName=#{userName }
+    </update>
+    
+    <!-- 닉네임으로 댓글 몇개인지 찾기 -->
+    <select id="selectNamecom" parameterType="string" resultType="integer">
+    	select count(*) from comments where userName=#{userName }
+    </select>
+    
+    
+    <!-- 스터디 등록 -->
+	<insert id="insertStudy" parameterType="StudyDto">
+		insert into studyInfo values(studyNo.nextval,#{studyName},#{content},#{maxPeopleNum},1,#{language},#{manager_userNo},sysdate)
+	</insert>
+	
+	
+	
+	<!-- 닉네임 중복확인, 숫자가 0이면 사용가능, 1이상이면 사용불가능 -->
+	<select id="selectstudyName" parameterType="StudyDto" resultType="integer">
+		select count(*) from studyInfo where studyName=#{studyName}
+	</select>
+
+	<!-- 제목으로 검색하여 가져오기 -->
+    <select id="selectSearchTitle" parameterType="StudyBoardbean" resultType="BoardDto">
+    select postno, views, posttime, title, name from userInfo U 
+      inner join(select P.PostNo, P.title, P.content,P.PostTime,P.views, M.studyno as studyno, userNo
+      from Postinfo P inner join studymemberinfo m on P.studymemberno =
+      M.studymemberno where studyNo = #{studyNo}) B on B.userNo = U.userNo where studyNo = #{studyNo} and title like '%'|| #{searchPostValue} ||'%' order by postno desc
+    </select>
+    <!-- 닉네임으로 검색하여 가져오기 -->
+    <select id="selectSearchName" parameterType="StudyBoardbean" resultType="BoardDto">
+    select postno, views, posttime, title, name from userInfo U 
+      inner join(select P.PostNo, P.title, P.content,P.PostTime,P.views, M.studyno as studyno, userNo
+      from Postinfo P inner join studymemberinfo m on P.studymemberno =
+      M.studymemberno where studyNo = #{studyNo}) B on B.userNo = U.userNo where studyNo = ${studyNo} and name like '%'||#{searchPostValue}||'%' order by postno desc
+    </select>
+    
+    <select id="selectMyStudyAsMember" parameterType="String" resultType="StudyDto">
+    select S.studyno,S.studyname,content,S.maxpeoplenum,S.nowpeoplenum,S.language,M.userno,M.studyno from studyinfo S inner join studymemberinfo M on s.studyno = m.studyno where userno =#{userNo} and manager_userno!=#{userNo}
+    </select>
+
+	<select id="selectMyStudyAsManager" parameterType="String" resultType="StudyDto">
+	select S.studyno,S.studyname,content,S.maxpeoplenum,S.nowpeoplenum,S.language,M.userno,M.studyno from studyinfo S inner join studymemberinfo M on s.studyno = m.studyno where userno =#{userNo} and manager_userno=#{userNo}
+	</select>
+	
+
+	<!-- 스터디장이 방금 만든 스터디 번호 가지고 오기 -->
+	<select id="getStudyNo" parameterType="integer" resultType="integer">
+		select max(studyNo) as studyNo from studyInfo where manager_userno = #{manager_userNo}
+	</select>
+	
+	<!-- 스터디번호로 스터디명 가져오기 -->
+	<select id="selectSnoName" parameterType="integer" resultType="string">
+		select studyName from studyInfo where studyNo=#{studyNo}
+	</select>
+	
+	<!-- 스터디번호와 유저번호로 스터디장 바꾸기 -->
+	<update id="upStudyManage" parameterType="StudyDto">
+		update studyInfo set manager_userno=#{manager_userNo} where studyNo=#{studyNo}
+	</update>
+	
+	<!-- 스터디 회원 탈퇴시 nowpeoplenum 하나 줄이기 -->
+	<update id="downNowpnum" parameterType="integer">
+		update studyInfo set NowPeopleNum=NowPeopleNum-1 where studyNo=#{studyNo}
+	</update>
+
+	<!-- 스터디 멤버 가입 -->
+	<insert id="insertStudyMember" parameterType="StudyMemberDto">
+		insert into StudyMemberInfo values(StudyMemberNo.nextval,#{userNo},#{studyNo})
+	</insert>
+	
+	<!-- 스터디 유저가 있는지 확인 -->
+	<select id="selectNoUser" parameterType="StudyMemberDto" resultType="integer">
+		select count(*) from StudyMemberInfo where studyNo=#{studyNo} and userNo=#{userNo}
+	</select>
+	
+	<!-- 스터디 가입 폼 전송  -->
+	<insert id="insertStudyform" parameterType="FormDto">
+		insert into FormInfo values(FormNo.nextval,#{content},0,#{applicant},#{studyNo})
+	</insert>
+	
+	<!-- formNo의 maxnum 구하기 (필요없음)-->
+	<select id="getFormNo" resultType="integer">
+		select max(studyNo) from FormInfo
+	</select>
+	
+	<!-- FormInfo의 다른정보를 가지고 formNo 를 select하기  -->
+	<select id="selectInfoNo" parameterType="FormDto" resultType="integer">
+		select * from FormInfo where applicant=#{applicant} and studyNo=#{studyNo} and state=#{state }
+	</select>
+	
+	<!-- 알림 추가하기 -->
+	<insert id="insertAlarm"  parameterType="AlarmDto">
+		insert into AlarmInfo values(AlarmNo.nextval,0,#{formNo},#{userNo})
+	</insert>
+	
+	<!-- 스터디 번호로 스터디정보 받아오기 -->
+	<select id="selectNoStudyInfo" parameterType="integer" resultType="StudyDto">
+		select * from StudyInfo where studyNo=#{studyNo}
+	</select>
+
+	<select id="selectformInfo" parameterType="integer" resultType="FormDetailBean">
+		select U.userNo, U.name, formNo, state,studyNo, manager_userNo,studyName, A.content as content from userInfo U join 
+		(select formNo, state, applicant,studyNo, manager_userNo,studyName, F.content as content from formInfo F join studyInfo S using(studyNo)  where formNo=#{formNo}) A
+		on (A.applicant = U.userNo)
+	</select>
+
+	<update id="updateApprovalState" parameterType="integer" >
+		update formInfo set state = 1 where formNo=#{formNo}
+	</update>
+	
+	<update id="updateRefusalState" parameterType="integer" >
+		update formInfo set state = -1 where formNo=#{formNo}
+	</update>
+	
+	<!-- 알림 클릭시  -->
+	<update id="updateAlarm" parameterType="AlarmDto">
+		update AlarmInfo set click = 1 where formNo=#{formNo}
+	</update>
+	
+	<!-- 게시글 삭제 -->
+	<delete id="deletePost" parameterType="PostDto">
+		delete from postINfo where postNo = #{postNo} and sNo=#{sNo}
+	</delete>
+	
+	<!-- 유저 번호로 작성한 게시글 모두 보기 -->
+	<select id="selectNopost" parameterType="integer" resultType="PostDto">
+		select * from postINfo where uNo=#{uNo} order by sNo asc
+	</select>
+	
+	<select id="selectPostUserNo" parameterType="integer" resultType="integer">
+		select userNo from postinfo join studyMemberInfo using(studyMemberno) where postNo = #{postNo}
+	</select>
+	
+
+	<!-- 스터디 중복 가입 방지 -->
+	<select id="selectStudyExist" parameterType="StudyMemberDto" resultType="integer">
+		select count(*) from studymemberInfo where userNo=#{userNo} and studyNo=#{studyNo}
+	</select>
+	<!--게시글 업데이트-->
+	<update id="updatePost" parameterType="PostDto">
+		update postinfo set title=#{title}, content=#{content} where postno=#{postNo} and sNo=#{sNo}
+	</update>
+	
+	<!-- 스터디 가입하기 버튼 눌렀을때 이미 가입된 멤버인지 확인하기 -->
+	<select id="selectalMember" parameterType="StudyMemberDto" resultType="integer">
+		select count(*) from studyMemberInfo where studyNo=#{studyNo} and userNo=#{userNo} 
+	</select>
+	
+	<!-- 스터디 가입버튼 눌렀을때 이전에 가입신청을 한 적이 있는지 확인하기 -->
+	<select id="selectalSub" parameterType="FormDto" resultType="integer">
+		select count(*) from forminfo where applicant=#{applicant} and studyNo=#{studyNo} and state=0
+	</select>
+	
+</mapper>

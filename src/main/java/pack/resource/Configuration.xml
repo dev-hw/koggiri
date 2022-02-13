@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+ <typeAliases>
+ 	<typeAlias alias="StudyDto" type="pack.model.StudyDto"/>
+
+	<typeAlias alias="BoardDto" type="pack.model.BoardDto"/>
+    <typeAlias alias="PostDto" type="pack.model.PostDto"/>
+    <typeAlias type="pack.controller.StudyBoardBean" alias="StudyBoardbean" />
+    <typeAlias alias="UserDto" type="pack.model.UserDto"/>
+    <typeAlias alias="UserBean" type="pack.controller.UserBean"/>
+
+ 	<typeAlias alias="BoardDto" type="pack.model.BoardDto"/>
+ 	<typeAlias alias="PostDto" type="pack.model.PostDto"/>
+	<typeAlias type="pack.controller.StudySearchBean" alias="StudySearchBean"/>
+ 	<typeAlias type="pack.controller.StudyBoardBean" alias="StudyBoardbean" />
+	
+    <typeAlias type="pack.controller.StudyDetailBean" alias="StudyDetailBean" />
+    <typeAlias type="pack.controller.AlarmBean" alias="AlarmBean" />
+
+    
+    <typeAlias type="pack.model.CommentDto" alias="CommentDto" /> 
+ 	<typeAlias type="pack.model.StudyMemberDto" alias="StudyMemberDto" /> 
+ 	
+ 	<typeAlias type="pack.model.FormDto" alias="FormDto" /> 
+ 	<typeAlias type="pack.model.AlarmDto" alias="AlarmDto" /> 
+	<typeAlias type="pack.controller.FormDetailBean" alias="FormDetailBean" /> 
+ </typeAliases>
+<!-- 
+ <properties resource="pack/db.properties" />
+ <environments default="dev">
+  <environment id="dev">
+   <transactionManager type="JDBC" />
+   <dataSource type="POOLED">
+    <property name="driver" value="${driver}" />
+    <property name="url" value="${url}" />
+    <property name="username" value="${username}" />
+    <property name="password" value="${password}" />
+   </dataSource>
+  </environment>
+ </environments>
+  -->
+ 
+ 
+ <mappers>
+  <mapper resource="pack/resource/DataMapper.xml" />
+ </mappers>
+</configuration>
