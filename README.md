@@ -8,4 +8,17 @@ Spring MVC Framework 기반의 팀 프로젝트 스터디 웹 사이트입니다
 <br><br>
 ## 시연 영상
 https://youtu.be/Euas_u6IOhM
+<br><br>
+## 코끼리 팀 업무분장
+이유경 : 스터디 찾기, 스터디 소개, 알림 페이지, 스터디 가입신청 승인/거절, 스터디 생성
+<br>임지윤 : 스터디 게시판 페이지, 스터디 조회
+<br>우혜지 : 프론트엔드, CSS, PPT, 포토샵, 일러스트
+<br>이혜원 : 로그인, 회원가입, 게시글 댓글, 스터디 가입, 회원정보 수정/탈퇴, 아이디/비밀번호 찾기, 게시물/댓글 관리, 스터디 폐쇄
+<br><br>
+
+## 깃허브
+이유경 : https://github.com/Lee-YuGyeong
+<br>임지윤 : https://github.com/LIMJIY00N
+<br>우혜지 : https://github.com/gamzassak
+<br>이혜원 : https://github.com/dev-hw
 
